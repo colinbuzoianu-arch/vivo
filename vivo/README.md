@@ -1,4 +1,4 @@
-# Similimum — Classical Homeopathic Consultation
+# Vivo — Classical Homeopathic Consultation
 
 AI-powered classical homeopathic intake interview + remedy matching from a 100-remedy database.
 
@@ -20,8 +20,8 @@ Anthropic API  ← API key lives here only, never in browser
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/similimum.git
-cd similimum
+git clone https://github.com/YOUR_USERNAME/vivo.git
+cd vivo
 npm install
 ```
 
@@ -93,7 +93,7 @@ git push origin main       # auto-deploys via Vercel GitHub integration
 ## Project Structure
 
 ```
-similimum/
+vivo/
 ├── api/
 │   ├── chat.js            # Intake conversation endpoint
 │   └── analysis.js        # Clinical rationale endpoint
