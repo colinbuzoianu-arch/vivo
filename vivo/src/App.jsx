@@ -266,7 +266,7 @@ function WelcomeScreen({ onStart }) {
           </svg>
         </div>
 
-        <h1 className={styles.welcomeTitle}>The Art of </h1>
+        <h1 className={styles.welcomeTitle}>The Art of Vivo</h1>
         <p className={styles.welcomeSubtitle}>
           A complete classical consultation in two parts — first we listen, then the remedy speaks.
         </p>
