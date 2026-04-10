@@ -214,13 +214,9 @@ function Header({ phase }) {
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-          <circle cx="11" cy="11" r="10" stroke="#c9b87a" strokeWidth="1"/>
-          <path d="M11 3 L11 19 M3 11 L19 11" stroke="#c9b87a" strokeWidth="0.8" opacity="0.5"/>
-          <circle cx="11" cy="11" r="3" fill="#c9b87a" opacity="0.8"/>
-        </svg>
-        <div>
-          <div className={styles.logoText}></div>
+<img src="/favicon.svg" width="22" height="22" alt="" aria-hidden="true" />
+<div>
+  <div className={styles.logoText}>VIVO</div>
           <div className={styles.logoSub}>Classical Homeopathic Consultation</div>
         </div>
         <div className={styles.phaseIndicator}>
