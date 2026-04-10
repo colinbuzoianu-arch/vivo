@@ -20,7 +20,7 @@ Anthropic API  ← API key lives here only, never in browser
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/vivo.git
+git clone https://github.com/colinbuzoianu-arch/vivo.git
 cd vivo
 npm install
 ```
