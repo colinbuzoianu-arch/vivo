@@ -24,7 +24,7 @@ export default function App() {
   // Restore session on mount (survives page refresh within same tab)
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem("similimum_session");
+      const saved = sessionStorage.getItem("vivo_session");
       if (saved) {
         const s = JSON.parse(saved);
         if (s.phase && s.phase !== "welcome") {
@@ -42,8 +42,8 @@ export default function App() {
   // Persist session on every meaningful state change
   const saveSession = useCallback((patch) => {
     try {
-      const current = JSON.parse(sessionStorage.getItem("similimum_session") || "{}");
-      sessionStorage.setItem("similimum_session", JSON.stringify({ ...current, ...patch }));
+      const current = JSON.parse(sessionStorage.getItem("vivo_session") || "{}");
+      sessionStorage.setItem("vivo_session", JSON.stringify({ ...current, ...patch }));
     } catch { /* ignore */ }
   }, []);
 
@@ -166,7 +166,7 @@ export default function App() {
     setTopRemedies([]);
     setAnalysisText("");
     setPhase("welcome");
-    sessionStorage.removeItem("similimum_session");
+    sessionStorage.removeItem("_session");
   };
 
   const handleKey = (e) => {
@@ -220,7 +220,7 @@ function Header({ phase }) {
           <circle cx="11" cy="11" r="3" fill="#c9b87a" opacity="0.8"/>
         </svg>
         <div>
-          <div className={styles.logoText}>SIMILIMUM</div>
+          <div className={styles.logoText}></div>
           <div className={styles.logoSub}>Classical Homeopathic Consultation</div>
         </div>
         <div className={styles.phaseIndicator}>
@@ -266,7 +266,7 @@ function WelcomeScreen({ onStart }) {
           </svg>
         </div>
 
-        <h1 className={styles.welcomeTitle}>The Art of Similimum</h1>
+        <h1 className={styles.welcomeTitle}>The Art of </h1>
         <p className={styles.welcomeSubtitle}>
           A complete classical consultation in two parts — first we listen, then the remedy speaks.
         </p>
