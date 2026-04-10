@@ -214,7 +214,15 @@ function Header({ phase }) {
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-<img src="/favicon.svg" width="22" height="22" alt="" aria-hidden="true" />
+<svg width="22" height="22" viewBox="0 0 80 80" fill="none" aria-hidden="true">
+  <circle cx="40" cy="40" r="38" stroke="#c9b87a" strokeWidth="0.6" opacity="0.4"/>
+  <path d="M40 8 L40 72" stroke="#c9b87a" strokeWidth="0.5" opacity="0.3"/>
+  <path d="M8 40 L72 40" stroke="#c9b87a" strokeWidth="0.5" opacity="0.3"/>
+  <path d="M40 18 L46 30 L40 25 L34 30 Z" fill="#c9b87a" opacity="0.6"/>
+  <path d="M40 62 L46 50 L40 55 L34 50 Z" fill="#c9b87a" opacity="0.6"/>
+  <circle cx="40" cy="40" r="6" stroke="#c9b87a" strokeWidth="1" fill="none"/>
+  <circle cx="40" cy="40" r="2" fill="#c9b87a"/>
+</svg>
 <div>
   <div className={styles.logoText}>VIVO</div>
           <div className={styles.logoSub}>Classical Homeopathic Consultation</div>
