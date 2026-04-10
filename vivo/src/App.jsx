@@ -409,7 +409,7 @@ function AnalysisScreen() {
 function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, onRestart }) {
   const [expanded, setExpanded] = useState(0);
   const accentColors = ["#c9b87a", "#a8c4a5", "#b4a8c4"];
-  const ranks = ["Simillimum", "Second Choice", "Third Choice"];
+  const ranks = ["Vivo", "Second Choice", "Third Choice"];
 
   return (
     <div className={styles.resultsWrap}>
