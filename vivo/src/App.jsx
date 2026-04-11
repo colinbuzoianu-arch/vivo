@@ -196,6 +196,9 @@ export default function App() {
         {phase === "analysis" && <AnalysisScreen profile={profile} />}
         {phase === "results"  && (
           <ResultsScreen
+            const downloadPDF = () => {
+              window.print();
+            };
             profile={profile}
             topRemedies={topRemedies}
             analysisText={analysisText}
@@ -526,7 +529,9 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
           </dl>
         </div>
       )}
-
+      <button className={styles.downloadBtn} onClick={downloadPDF}>
+        Download Results as PDF
+      </button>
       <button className={styles.restartBtn} onClick={onRestart}>
         Start New Consultation
       </button>
