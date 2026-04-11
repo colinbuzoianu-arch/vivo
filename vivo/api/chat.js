@@ -6,28 +6,51 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-20250514";
 
 // ---------------------------------------------------------------------------
-// Simple in-memory rate limiter (resets when function cold-starts).
-// For persistent rate limiting across deployments, swap this for Upstash Redis:
-// https://upstash.com — free tier handles ~10k requests/day
+// Rate limiting — two-layer strategy:
+//
+//   1. Per-SESSION limit (default 60 requests): keyed by a sessionId the
+//      client generates once and sends in every request. This means a single
+//      heavy user on a shared IP (office, household) doesn't block everyone.
+//
+//   2. Per-IP hard cap (default 200 requests): last-resort guard against
+//      someone hammering the endpoint without a sessionId.
+//
+// Both windows reset after 1 hour. Values are tunable via env vars in Vercel
+// without a redeploy:
+//   RATE_LIMIT_SESSION_MAX   (default 60)
+//   RATE_LIMIT_IP_MAX        (default 200)
+//   RATE_LIMIT_WINDOW_MS     (default 3600000 = 1 hour)
+//
+// Note: this map resets on every cold start. For persistent limiting across
+// cold starts, swap for Upstash Redis: https://upstash.com (free tier).
 // ---------------------------------------------------------------------------
-const rateLimitMap = new Map();
-const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX || "10", 10);
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-function isRateLimited(ip) {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(ip, { count: 1, windowStart: now });
-    return false;
+const rateLimitMap = new Map();
+
+const SESSION_MAX  = parseInt(process.env.RATE_LIMIT_SESSION_MAX || "60",  10);
+const IP_MAX       = parseInt(process.env.RATE_LIMIT_IP_MAX      || "200", 10);
+const WINDOW_MS    = parseInt(process.env.RATE_LIMIT_WINDOW_MS   || String(60 * 60 * 1000), 10);
+
+function checkLimit(key, max) {
+  const now   = Date.now();
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now - entry.windowStart > WINDOW_MS) {
+    rateLimitMap.set(key, { count: 1, windowStart: now });
+    return { limited: false, remaining: max - 1 };
   }
-  if (entry.count >= RATE_LIMIT_MAX) return true;
+
+  if (entry.count >= max) {
+    const retryAfterMs = WINDOW_MS - (now - entry.windowStart);
+    return { limited: true, retryAfterMs };
+  }
+
   entry.count++;
-  return false;
+  return { limited: false, remaining: max - entry.count };
 }
 
 // ---------------------------------------------------------------------------
-// System prompt — identical to what was in the frontend before
+// System prompt
 // ---------------------------------------------------------------------------
 const INTAKE_SYSTEM = `You are an experienced classical homeopath conducting an initial patient intake. Your role is to gather a complete homeopathic profile through thoughtful, empathetic conversation.
 
@@ -57,21 +80,45 @@ CONVERSATION RULES:
 // Handler
 // ---------------------------------------------------------------------------
 export default async function handler(req, res) {
-  // CORS — tighten origin in production to your actual domain
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", process.env.ALLOWED_ORIGIN || "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Session-Id");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")   return res.status(405).json({ error: "Method not allowed" });
 
-  // Rate limiting
-  const ip = req.headers["x-forwarded-for"]?.split(",")[0].trim() || req.socket?.remoteAddress || "unknown";
-  if (isRateLimited(ip)) {
-    return res.status(429).json({ error: "Too many requests. Please try again later." });
+  // ── Rate limiting ─────────────────────────────────────────────────────────
+  const ip        = req.headers["x-forwarded-for"]?.split(",")[0].trim()
+                    || req.socket?.remoteAddress
+                    || "unknown";
+  const sessionId = req.headers["x-session-id"] || null;
+
+  // 1. Per-session check (primary, fairer)
+  if (sessionId) {
+    const { limited, retryAfterMs } = checkLimit(`session:${sessionId}`, SESSION_MAX);
+    if (limited) {
+      const minutes = Math.ceil(retryAfterMs / 60000);
+      res.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+      return res.status(429).json({
+        error: "rate_limited",
+        message: `You've reached the session limit. Please try again in ${minutes} minute${minutes !== 1 ? "s" : ""}.`,
+      });
+    }
   }
 
-  // Validate body
+  // 2. Per-IP hard cap (fallback)
+  const { limited: ipLimited, retryAfterMs: ipRetry } = checkLimit(`ip:${ip}`, IP_MAX);
+  if (ipLimited) {
+    const minutes = Math.ceil(ipRetry / 60000);
+    res.setHeader("Retry-After", String(Math.ceil(ipRetry / 1000)));
+    return res.status(429).json({
+      error: "rate_limited",
+      message: `Too many requests from this network. Please try again in ${minutes} minute${minutes !== 1 ? "s" : ""}.`,
+    });
+  }
+
+  // ── Validate body ─────────────────────────────────────────────────────────
   const { messages } = req.body || {};
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: "messages array is required" });
@@ -79,8 +126,8 @@ export default async function handler(req, res) {
 
   // Sanitise — only pass role + content, nothing else
   const safeMessages = messages.map((m) => ({
-    role: m.role === "assistant" ? "assistant" : "user",
-    content: String(m.content).slice(0, 4000), // cap per-message length
+    role:    m.role === "assistant" ? "assistant" : "user",
+    content: String(m.content).slice(0, 4000),
   }));
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -88,19 +135,20 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Server configuration error" });
   }
 
+  // ── Call Anthropic ────────────────────────────────────────────────────────
   try {
     const upstream = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "Content-Type":      "application/json",
+        "x-api-key":         process.env.ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model:      MODEL,
         max_tokens: 1000,
-        system: INTAKE_SYSTEM,
-        messages: safeMessages,
+        system:     INTAKE_SYSTEM,
+        messages:   safeMessages,
       }),
     });
 
@@ -113,6 +161,7 @@ export default async function handler(req, res) {
     const data = await upstream.json();
     const text = data.content?.map((b) => b.text || "").join("") || "";
     return res.status(200).json({ text });
+
   } catch (err) {
     console.error("Unexpected error in /api/chat:", err);
     return res.status(500).json({ error: "Unexpected server error." });
