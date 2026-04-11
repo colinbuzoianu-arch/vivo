@@ -420,7 +420,7 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
   
   const downloadPDF = () => {
     window.print();
-    
+  };
   return (
     <div className={styles.resultsWrap}>
       <div className={styles.resultsHeader}>
