@@ -196,9 +196,6 @@ export default function App() {
         {phase === "analysis" && <AnalysisScreen profile={profile} />}
         {phase === "results"  && (
           <ResultsScreen
-            const downloadPDF = () => {
-              window.print();
-            };
             profile={profile}
             topRemedies={topRemedies}
             analysisText={analysisText}
