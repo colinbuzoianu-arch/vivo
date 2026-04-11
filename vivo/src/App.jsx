@@ -130,7 +130,7 @@ export default function App() {
       });
 
       if (profileData) {
-        setTimeout(() => runAnalysis(profileData), 1800);
+        setTimeout(() => runAnalysis(profileData, [...messages, userMsg, assistantMsg]), 1800);
       }
     } catch (err) {
       setMessages(m => [...m, {
@@ -141,11 +141,12 @@ export default function App() {
       }]);
     } finally {
       setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
 
   // ── Run scoring + fetch rationale ────────────────────────────────────────
-  const runAnalysis = async (profileData) => {
+  const runAnalysis = async (profileData, finalMessages) => {
     setProfile(profileData);
     setPhase("analysis");
     saveSession({ phase: "analysis", profile: profileData });
@@ -160,12 +161,12 @@ export default function App() {
       saveSession({ phase: "results", topRemedies: top, analysisText: text });
 
       // ── Save completed consultation to localStorage history ──────────────
-      history.save({
-        profile:      profileData,
-        messages,
-        topRemedies:  top,
-        analysisText: text,
-      });
+history.save({
+  profile:      profileData,
+  messages:     finalMessages,
+  topRemedies:  top,
+  analysisText: text,
+});
     } catch {
       setAnalysisText("Clinical rationale unavailable. Please review the matched remedies.");
     } finally {
