@@ -399,6 +399,11 @@ function WelcomeScreen({ onStart }) {
 }
 
 function IntakeScreen({ messages, loading, input, setInput, sendMessage, handleKey, inputRef, messagesEndRef }) {
+ useEffect(() => {
+    if (!loading) {
+      inputRef.current?.focus();
+    }
+  }, [loading]);
   return (
     <div className={styles.intakeWrap}>
       <div className={styles.messages} role="log" aria-live="polite" aria-label="Consultation conversation">
