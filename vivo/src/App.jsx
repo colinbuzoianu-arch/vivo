@@ -7,6 +7,7 @@ import { useProfile } from "./hooks/useProfile.js";
 import { HistorySidebar } from "./components/HistorySidebar.jsx";
 import { ProfileDrawer } from "./components/ProfileDrawer.jsx";
 import styles from "./App.module.css";
+import { downloadConsultationPDF } from "./lib/pdf.js";
 
 // ─── Phase components live below the main export ─────────────────────────────
 
@@ -488,7 +489,9 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
   const accentColors = ["#c9b87a", "#a8c4a5", "#b4a8c4"];
   const ranks = ["Vivo", "Second Choice", "Third Choice"];
 
-  const downloadPDF = () => { window.print(); };
+  const downloadPDF = () => {
+  downloadConsultationPDF({ profile, topRemedies, analysisText });
+};
 
   return (
     <div className={styles.resultsWrap}>
