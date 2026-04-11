@@ -259,18 +259,19 @@ function WelcomeScreen({ onStart }) {
     <div className={styles.welcome}>
       <div className={styles.welcomeGlow} aria-hidden="true" />
       <div className={styles.welcomeContent}>
-        <div className={styles.crest} aria-hidden="true">
-          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-            <circle cx="40" cy="40" r="38" stroke="#c9b87a" strokeWidth="0.6" opacity="0.4"/>
-            <circle cx="40" cy="40" r="28" stroke="#c9b87a" strokeWidth="0.4" opacity="0.3"/>
-            <path d="M40 8 L40 72" stroke="#c9b87a" strokeWidth="0.5" opacity="0.3"/>
-            <path d="M8 40 L72 40" stroke="#c9b87a" strokeWidth="0.5" opacity="0.3"/>
-            <path d="M40 18 L46 30 L40 25 L34 30 Z" fill="#c9b87a" opacity="0.6"/>
-            <path d="M40 62 L46 50 L40 55 L34 50 Z" fill="#c9b87a" opacity="0.6"/>
-            <circle cx="40" cy="40" r="6" stroke="#c9b87a" strokeWidth="1" fill="none"/>
-            <circle cx="40" cy="40" r="2" fill="#c9b87a"/>
-          </svg>
-        </div>
+       <div className={styles.crest} aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80" height="80">
+    <rect width="100" height="100" rx="14" fill="#0b0b0b"/>
+    <line x1="22" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
+    <line x1="78" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
+    <line x1="15" y1="24" x2="29" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
+    <line x1="71" y1="24" x2="85" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
+    <line x1="50" y1="72" x2="50" y2="58" stroke="#c9b87a" strokeWidth="1.8" strokeLinecap="round"/>
+    <path d="M50 58 C44 49 33 47 32 54 C31 61 42 62 50 58Z" fill="#c9b87a"/>
+    <path d="M50 58 C56 49 67 47 68 54 C69 61 58 62 50 58Z" fill="#c9b87a"/>
+    <ellipse cx="50" cy="53" rx="3.5" ry="5" fill="#c9b87a"/>
+  </svg>
+</div>
 
         <h1 className={styles.welcomeTitle}>The Art of Vivo</h1>
         <p className={styles.welcomeSubtitle}>
