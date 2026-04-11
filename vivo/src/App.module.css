@@ -480,3 +480,25 @@
   .journeyArrow { transform: rotate(90deg); }
   .userBubble { max-width: 90%; }
 }
+.downloadBtn {
+  display: block;
+  margin: 1.5rem auto 0.5rem;
+  padding: 0.65rem 2rem;
+  background: transparent;
+  border: 1px solid #c9b87a;
+  color: #c9b87a;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.downloadBtn:hover {
+  background: rgba(201,184,122,0.1);
+}
+
+@media print {
+  header, .inputBar, .restartBtn, .downloadBtn, .finalDisclaimer {
+    display: none !important;
+  }
+}
