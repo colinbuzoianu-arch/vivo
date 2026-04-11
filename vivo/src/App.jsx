@@ -420,7 +420,10 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
   const [expanded, setExpanded] = useState(0);
   const accentColors = ["#c9b87a", "#a8c4a5", "#b4a8c4"];
   const ranks = ["Vivo", "Second Choice", "Third Choice"];
-
+  
+  const downloadPDF = () => {
+    window.print();
+    
   return (
     <div className={styles.resultsWrap}>
       <div className={styles.resultsHeader}>
