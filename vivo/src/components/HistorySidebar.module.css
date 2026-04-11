@@ -1,0 +1,310 @@
+/* src/components/HistorySidebar.module.css */
+/* Matches vivo dark theme: #0b0b0b bg, #c9b87a gold, rgba(232,226,217,…) text */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 40;
+  animation: fadeIn 0.18s ease;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(380px, 92vw);
+  background: #111;
+  border-left: 0.5px solid rgba(201, 184, 122, 0.15);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(232, 226, 217, 0.9);
+  letter-spacing: 0.04em;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(232, 226, 217, 0.35);
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.closeBtn:hover { color: rgba(232, 226, 217, 0.8); }
+
+/* ── Search ───────────────────────────────────────────────────────────────── */
+
+.searchWrap {
+  position: relative;
+  padding: 12px 16px;
+  border-bottom: 0.5px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(232, 226, 217, 0.25);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 8px 28px 8px 32px;
+  font-size: 12px;
+  color: rgba(232, 226, 217, 0.8);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput::placeholder { color: rgba(232, 226, 217, 0.25); }
+.searchInput:focus { border-color: rgba(201, 184, 122, 0.3); }
+
+.searchClear {
+  position: absolute;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(232, 226, 217, 0.3);
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+
+.searchClear:hover { color: rgba(232, 226, 217, 0.7); }
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.body::-webkit-scrollbar { width: 3px; }
+.body::-webkit-scrollbar-track { background: transparent; }
+.body::-webkit-scrollbar-thumb { background: rgba(201, 184, 122, 0.2); border-radius: 2px; }
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.empty {
+  padding: 40px 24px;
+  font-size: 13px;
+  color: rgba(232, 226, 217, 0.3);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Detail view ──────────────────────────────────────────────────────────── */
+
+.detail {
+  padding: 16px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: rgba(232, 226, 217, 0.4);
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.backBtn:hover { color: rgba(232, 226, 217, 0.8); }
+
+.detailDate {
+  font-size: 11px;
+  color: rgba(232, 226, 217, 0.3);
+  letter-spacing: 0.04em;
+}
+
+.detailComplaint {
+  font-size: 16px;
+  color: rgba(232, 226, 217, 0.9);
+  line-height: 1.4;
+}
+
+.detailRemedy {
+  background: rgba(201, 184, 122, 0.06);
+  border: 0.5px solid rgba(201, 184, 122, 0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.detailRemedyLabel {
+  font-size: 10px;
+  color: #c9b87a;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.detailRemedyName {
+  font-size: 15px;
+  color: rgba(232, 226, 217, 0.9);
+  font-weight: 500;
+}
+
+.detailRemedyAbbr {
+  font-size: 13px;
+  color: rgba(232, 226, 217, 0.4);
+  font-weight: 400;
+}
+
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detailLabel {
+  font-size: 10px;
+  color: rgba(232, 226, 217, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.detailText {
+  font-size: 13px;
+  color: rgba(232, 226, 217, 0.65);
+  line-height: 1.7;
+}
+
+/* ── Transcript ───────────────────────────────────────────────────────────── */
+
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.transcript::-webkit-scrollbar { width: 2px; }
+.transcript::-webkit-scrollbar-thumb { background: rgba(201,184,122,0.15); border-radius: 2px; }
+
+.txAssist,
+.txUser {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.txUser { align-items: flex-end; }
+
+.txRole {
+  font-size: 10px;
+  color: rgba(232, 226, 217, 0.25);
+  letter-spacing: 0.04em;
+}
+
+.txText {
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 8px 10px;
+  border-radius: 8px;
+  max-width: 92%;
+}
+
+.txAssist .txText {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(232, 226, 217, 0.7);
+}
+
+.txUser .txText {
+  background: rgba(201, 184, 122, 0.1);
+  color: rgba(232, 226, 217, 0.75);
+}
+
+.deleteBtn {
+  margin-top: 8px;
+  background: none;
+  border: 0.5px solid rgba(185, 100, 100, 0.3);
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 12px;
+  color: rgba(185, 130, 130, 0.7);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  align-self: flex-start;
+}
+
+.deleteBtn:hover {
+  border-color: rgba(185, 100, 100, 0.6);
+  color: rgba(220, 150, 150, 0.9);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.footer {
+  padding: 12px 20px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  min-height: 40px;
+}
+
+.footerCount {
+  font-size: 11px;
+  color: rgba(232, 226, 217, 0.2);
+}

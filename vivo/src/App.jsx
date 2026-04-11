@@ -1,7 +1,13 @@
+// src/App.jsx
 import { useState, useRef, useEffect, useCallback } from "react";
 import { getTopRemedies } from "./lib/scorer.js";
 import { sendChatMessage, fetchAnalysis } from "./lib/api.js";
+import { useHistory } from "./hooks/useHistory.js";
+import { useProfile } from "./hooks/useProfile.js";
+import { HistorySidebar } from "./components/HistorySidebar.jsx";
+import { ProfileDrawer } from "./components/ProfileDrawer.jsx";
 import styles from "./App.module.css";
+import { downloadConsultationPDF } from "./lib/pdf.js";
 
 // ─── Phase components live below the main export ─────────────────────────────
 
@@ -15,6 +21,11 @@ export default function App() {
   const [topRemedies, setTopRemedies]   = useState([]);
   const [analysisText, setAnalysisText] = useState("");
   const [analysisLoading, setAnalysisLoading] = useState(false);
+
+  // ── History + profile ─────────────────────────────────────────────────────
+  const history     = useHistory();
+  const userProfile = useProfile();
+  const [showProfile, setShowProfile] = useState(false);
 
   // Full conversation history kept in a ref so it never triggers re-renders
   const conversationRef = useRef([]);
@@ -119,7 +130,6 @@ export default function App() {
       });
 
       if (profileData) {
-        // Short delay so the user reads the closing message
         setTimeout(() => runAnalysis(profileData), 1800);
       }
     } catch (err) {
@@ -148,6 +158,14 @@ export default function App() {
       const text = await fetchAnalysis(profileData, top);
       setAnalysisText(text);
       saveSession({ phase: "results", topRemedies: top, analysisText: text });
+
+      // ── Save completed consultation to localStorage history ──────────────
+      history.save({
+        profile:      profileData,
+        messages,
+        topRemedies:  top,
+        analysisText: text,
+      });
     } catch {
       setAnalysisText("Clinical rationale unavailable. Please review the matched remedies.");
     } finally {
@@ -166,7 +184,7 @@ export default function App() {
     setTopRemedies([]);
     setAnalysisText("");
     setPhase("welcome");
-    sessionStorage.removeItem("_session");
+    sessionStorage.removeItem("vivo_session");
   };
 
   const handleKey = (e) => {
@@ -175,7 +193,11 @@ export default function App() {
 
   return (
     <div className={styles.root}>
-      <Header phase={phase} />
+      <Header
+        phase={phase}
+        onOpenHistory={history.open}
+        onOpenProfile={() => setShowProfile(true)}
+      />
 
       <main className={styles.main}>
         {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
@@ -204,39 +226,89 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* ── History sidebar ───────────────────────────────────────────────── */}
+      {history.isOpen && (
+        <HistorySidebar
+          sessions={history.sessions}
+          selected={history.selected}
+          onSelect={history.select}
+          onClearSelected={history.clearSelected}
+          onClose={history.close}
+          onRemove={history.remove}
+        />
+      )}
+
+      {/* ── Profile drawer ────────────────────────────────────────────────── */}
+      {showProfile && (
+        <ProfileDrawer
+          profile={userProfile.profile}
+          onUpdate={userProfile.update}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function Header({ phase }) {
+function Header({ phase, onOpenHistory, onOpenProfile }) {
   return (
     <header className={styles.header}>
       <div className={styles.headerInner}>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="22" height="22" aria-hidden="true">
-  <rect width="100" height="100" rx="14" fill="#0b0b0b"/>
-  <line x1="22" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
-  <line x1="78" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
-  <line x1="15" y1="24" x2="29" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
-  <line x1="71" y1="24" x2="85" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
-  <line x1="50" y1="72" x2="50" y2="58" stroke="#c9b87a" strokeWidth="1.8" strokeLinecap="round"/>
-  <path d="M50 58 C44 49 33 47 32 54 C31 61 42 62 50 58Z" fill="#c9b87a"/>
-  <path d="M50 58 C56 49 67 47 68 54 C69 61 58 62 50 58Z" fill="#c9b87a"/>
-  <ellipse cx="50" cy="53" rx="3.5" ry="5" fill="#c9b87a"/>
-</svg>
-<div>
-  <div className={styles.logoText}>VIVO</div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="22" height="22" aria-hidden="true">
+          <rect width="100" height="100" rx="14" fill="#0b0b0b"/>
+          <line x1="22" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
+          <line x1="78" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
+          <line x1="15" y1="24" x2="29" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="71" y1="24" x2="85" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
+          <line x1="50" y1="72" x2="50" y2="58" stroke="#c9b87a" strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M50 58 C44 49 33 47 32 54 C31 61 42 62 50 58Z" fill="#c9b87a"/>
+          <path d="M50 58 C56 49 67 47 68 54 C69 61 58 62 50 58Z" fill="#c9b87a"/>
+          <ellipse cx="50" cy="53" rx="3.5" ry="5" fill="#c9b87a"/>
+        </svg>
+        <div>
+          <div className={styles.logoText}>VIVO</div>
           <div className={styles.logoSub}>Classical Homeopathic Consultation</div>
         </div>
-        <div className={styles.phaseIndicator}>
-          <span style={{ color: ["welcome","intake"].includes(phase) ? "#c9b87a" : "rgba(232,226,217,0.3)" }}>
-            {["welcome","intake"].includes(phase) ? "● " : ""}Part 1
-          </span>
-          <span className={styles.phaseSep}>/</span>
-          <span style={{ color: ["analysis","results"].includes(phase) ? "#c9b87a" : "rgba(232,226,217,0.3)" }}>
-            {["analysis","results"].includes(phase) ? "● " : ""}Part 2
-          </span>
+
+        <div className={styles.headerRight}>
+          <div className={styles.phaseIndicator}>
+            <span style={{ color: ["welcome","intake"].includes(phase) ? "#c9b87a" : "rgba(232,226,217,0.3)" }}>
+              {["welcome","intake"].includes(phase) ? "● " : ""}Part 1
+            </span>
+            <span className={styles.phaseSep}>/</span>
+            <span style={{ color: ["analysis","results"].includes(phase) ? "#c9b87a" : "rgba(232,226,217,0.3)" }}>
+              {["analysis","results"].includes(phase) ? "● " : ""}Part 2
+            </span>
+          </div>
+
+          {/* History button */}
+          <button
+            className={styles.headerBtn}
+            onClick={onOpenHistory}
+            aria-label="View consultation history"
+            title="Past consultations"
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+              <circle cx="7.5" cy="7.5" r="6" stroke="currentColor" strokeWidth="0.9"/>
+              <path d="M7.5 4.5 L7.5 7.5 L9.5 9.5" stroke="currentColor" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Profile button */}
+          <button
+            className={styles.headerBtn}
+            onClick={onOpenProfile}
+            aria-label="Your profile"
+            title="Your profile"
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+              <circle cx="7.5" cy="5.5" r="2.5" stroke="currentColor" strokeWidth="0.9"/>
+              <path d="M2 13 C2 10 13 10 13 13" stroke="currentColor" strokeWidth="0.9" fill="none" strokeLinecap="round"/>
+            </svg>
+          </button>
         </div>
       </div>
     </header>
@@ -259,19 +331,19 @@ function WelcomeScreen({ onStart }) {
     <div className={styles.welcome}>
       <div className={styles.welcomeGlow} aria-hidden="true" />
       <div className={styles.welcomeContent}>
-       <div className={styles.crest} aria-hidden="true">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80" height="80">
-    <rect width="100" height="100" rx="14" fill="#0b0b0b"/>
-    <line x1="22" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
-    <line x1="78" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
-    <line x1="15" y1="24" x2="29" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
-    <line x1="71" y1="24" x2="85" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
-    <line x1="50" y1="72" x2="50" y2="58" stroke="#c9b87a" strokeWidth="1.8" strokeLinecap="round"/>
-    <path d="M50 58 C44 49 33 47 32 54 C31 61 42 62 50 58Z" fill="#c9b87a"/>
-    <path d="M50 58 C56 49 67 47 68 54 C69 61 58 62 50 58Z" fill="#c9b87a"/>
-    <ellipse cx="50" cy="53" rx="3.5" ry="5" fill="#c9b87a"/>
-  </svg>
-</div>
+        <div className={styles.crest} aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80" height="80">
+            <rect width="100" height="100" rx="14" fill="#0b0b0b"/>
+            <line x1="22" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
+            <line x1="78" y1="24" x2="50" y2="72" stroke="#c9b87a" strokeWidth="7" strokeLinecap="round"/>
+            <line x1="15" y1="24" x2="29" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="71" y1="24" x2="85" y2="24" stroke="#c9b87a" strokeWidth="3" strokeLinecap="round"/>
+            <line x1="50" y1="72" x2="50" y2="58" stroke="#c9b87a" strokeWidth="1.8" strokeLinecap="round"/>
+            <path d="M50 58 C44 49 33 47 32 54 C31 61 42 62 50 58Z" fill="#c9b87a"/>
+            <path d="M50 58 C56 49 67 47 68 54 C69 61 58 62 50 58Z" fill="#c9b87a"/>
+            <ellipse cx="50" cy="53" rx="3.5" ry="5" fill="#c9b87a"/>
+          </svg>
+        </div>
 
         <h1 className={styles.welcomeTitle}>The Art of Vivo</h1>
         <p className={styles.welcomeSubtitle}>
@@ -297,7 +369,6 @@ function WelcomeScreen({ onStart }) {
           </div>
         </div>
 
-        {/* Medical disclaimer — must accept before proceeding */}
         <div className={styles.disclaimerBox}>
           <label className={styles.disclaimerLabel}>
             <input
@@ -417,10 +488,11 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
   const [expanded, setExpanded] = useState(0);
   const accentColors = ["#c9b87a", "#a8c4a5", "#b4a8c4"];
   const ranks = ["Vivo", "Second Choice", "Third Choice"];
-  
+
   const downloadPDF = () => {
-    window.print();
-  };
+  downloadConsultationPDF({ profile, topRemedies, analysisText });
+};
+
   return (
     <div className={styles.resultsWrap}>
       <div className={styles.resultsHeader}>
@@ -433,7 +505,6 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
         )}
       </div>
 
-      {/* Clinical rationale */}
       <div className={styles.rationaleBox}>
         <div className={styles.rationaleLabel}>Clinical Rationale</div>
         {analysisLoading
@@ -441,7 +512,6 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
           : <p className={styles.rationaleText}>{analysisText}</p>}
       </div>
 
-      {/* Top 3 */}
       <div className={styles.remedyList}>
         {topRemedies.map((item, idx) => {
           const r      = item.remedy;
@@ -482,10 +552,10 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
               {isOpen && (
                 <div className={styles.remedyDetail}>
                   <div className={styles.detailGrid}>
-                    <DetailSection label="Keynotes"     items={r.keynotes.slice(0,5)} color="rgba(201,184,122,0.1)" textColor="rgba(232,226,217,0.65)" borderColor="rgba(201,184,122,0.15)" />
-                    <DetailSection label="Better From"  items={r.modalities.better.slice(0,4)} color="rgba(134,185,130,0.12)" textColor="#86b982" borderColor="rgba(134,185,130,0.2)" />
-                    <DetailSection label="Worse From"   items={r.modalities.worse.slice(0,4)}  color="rgba(185,130,130,0.12)" textColor="#b98282" borderColor="rgba(185,130,130,0.2)" />
-                    <DetailSection label="Mental Picture" items={r.mentals.slice(0,4)}          color="rgba(148,130,185,0.12)" textColor="#9482b9" borderColor="rgba(148,130,185,0.2)" />
+                    <DetailSection label="Keynotes"      items={r.keynotes.slice(0,5)}          color="rgba(201,184,122,0.1)"  textColor="rgba(232,226,217,0.65)" borderColor="rgba(201,184,122,0.15)" />
+                    <DetailSection label="Better From"   items={r.modalities.better.slice(0,4)} color="rgba(134,185,130,0.12)" textColor="#86b982"               borderColor="rgba(134,185,130,0.2)" />
+                    <DetailSection label="Worse From"    items={r.modalities.worse.slice(0,4)}  color="rgba(185,130,130,0.12)" textColor="#b98282"               borderColor="rgba(185,130,130,0.2)" />
+                    <DetailSection label="Mental Picture" items={r.mentals.slice(0,4)}           color="rgba(148,130,185,0.12)" textColor="#9482b9"               borderColor="rgba(148,130,185,0.2)" />
                   </div>
 
                   <div className={styles.potencyBox}>
@@ -509,7 +579,6 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
         })}
       </div>
 
-      {/* Case summary */}
       {profile && (
         <div className={styles.caseSummary}>
           <div className={styles.caseSummaryTitle}>Case Summary</div>
@@ -529,6 +598,7 @@ function ResultsScreen({ profile, topRemedies, analysisText, analysisLoading, on
           </dl>
         </div>
       )}
+
       <button className={styles.downloadBtn} onClick={downloadPDF}>
         Download Results as PDF
       </button>
