@@ -3,7 +3,7 @@
 // Called once per consultation after the intake is complete.
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-20250514";
+const MODEL = "claude-sonnet-4-6";
 
 // Same simple rate limiter — shared state does NOT persist between the two
 // functions in production (each is its own Lambda). That's fine — they have
